@@ -26,7 +26,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.center
@@ -58,7 +57,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(16.dp)
                     ) {
                         ColorCircle(
-                            eventHandler = remember { { viewModel.accept(it) } },
+                            eventHandler = { event -> viewModel.accept(event) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
