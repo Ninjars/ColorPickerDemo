@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,19 +25,29 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
+import androidx.lifecycle.ViewModelProvider
 import com.example.tutorial.ui.theme.TutorialTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val viewModelProvider = ViewModelProvider(this)
+        val viewModel = viewModelProvider[ColorPickerViewModel::class.java]
+
         setContent {
+            val state = viewModel.uiState.collectAsState()
             TutorialTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -47,15 +58,26 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(16.dp)
                     ) {
                         ColorCircle(
+                            eventHandler = remember { { viewModel.accept(it) } },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
                         )
-                        Slider(value = 0.25f, onValueChange = { value -> })
-                        Slider(value = 0.5f, onValueChange = { value -> })
-                        Slider(value = 0.75f, onValueChange = { value -> })
+                        Slider(
+                            value = state.value.hue,
+                            onValueChange = { value -> viewModel.accept(Event.HueSet(value)) })
+                        Slider(
+                            value = state.value.sat,
+                            onValueChange = { value -> viewModel.accept(Event.SatSet(value)) })
+                        Slider(
+                            value = state.value.lum,
+                            onValueChange = { value -> viewModel.accept(Event.LumSet(value)) })
 
-                        Readout(modifier = Modifier.fillMaxWidth())
+                        Readout(
+                            color = state.value.color,
+                            text = state.value.hexCode,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
@@ -64,7 +86,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Readout(modifier: Modifier = Modifier) {
+fun Readout(
+    color: Color,
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -74,7 +100,7 @@ fun Readout(modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .size(100.dp, 50.dp)
-                .background(Color.Red)
+                .background(color)
         )
         Box(
             modifier = Modifier
@@ -87,7 +113,7 @@ fun Readout(modifier: Modifier = Modifier) {
                 )
         ) {
             Text(
-                text = "#FF0000",
+                text = text,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.align(Alignment.Center)
             )
@@ -97,10 +123,34 @@ fun Readout(modifier: Modifier = Modifier) {
 
 @Composable
 fun ColorCircle(
+    eventHandler: (Event) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Canvas(
         modifier = modifier
+            .pointerInput(Unit) {
+                val floatSize = size.toSize()
+                detectDragGestures(
+                    onDragStart = { startOffset ->
+                        eventHandler(
+                            Event.ColorPickerSet(
+                                floatSize.center,
+                                floatSize.maxDimension,
+                                startOffset
+                            )
+                        )
+                    },
+                    onDrag = { change, _ ->
+                        eventHandler(
+                            Event.ColorPickerSet(
+                                floatSize.center,
+                                floatSize.maxDimension,
+                                change.position
+                            )
+                        )
+                    },
+                )
+            }
     ) {
         drawCircle(
             brush = Brush.sweepGradient(

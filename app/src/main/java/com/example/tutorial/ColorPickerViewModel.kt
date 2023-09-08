@@ -78,7 +78,6 @@ class ColorPickerViewModel : ViewModel(), Consumer<Event> {
     private fun State.toWheelOffset(): Offset =
         Offset(x = cos(hue * PI).toFloat(), y = sin(hue * PI).toFloat())
 
-
     private data class State(
         val hue: Float,
         val sat: Float,
