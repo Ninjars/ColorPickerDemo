@@ -1,7 +1,6 @@
 package com.example.tutorial
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
@@ -33,6 +32,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(16.dp)
                     ) {
                         ColorCircle(
+                            sat = state.value.sat,
                             markerPosition = state.value.normalisedWheelOffset,
                             eventHandler = { event -> viewModel.accept(event) },
                             modifier = Modifier
@@ -125,6 +127,7 @@ fun Readout(
 
 @Composable
 fun ColorCircle(
+    sat: Float,
     markerPosition: Offset,
     eventHandler: (Event) -> Unit,
     modifier: Modifier = Modifier,
@@ -166,7 +169,8 @@ fun ColorCircle(
                     Color.Magenta,
                     Color.Red
                 )
-            )
+            ),
+            colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(sat) })
         )
         drawCircle(
             brush = Brush.radialGradient(
