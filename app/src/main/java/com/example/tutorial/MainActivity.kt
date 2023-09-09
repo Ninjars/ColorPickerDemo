@@ -1,6 +1,7 @@
 package com.example.tutorial
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -47,7 +49,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val state = viewModel.uiState.collectAsState()
-            TutorialTheme {
+            TutorialTheme(darkTheme = true) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -57,6 +59,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(16.dp)
                     ) {
                         ColorCircle(
+                            markerPosition = state.value.normalisedWheelOffset,
                             eventHandler = { event -> viewModel.accept(event) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -122,6 +125,7 @@ fun Readout(
 
 @Composable
 fun ColorCircle(
+    markerPosition: Offset,
     eventHandler: (Event) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -168,6 +172,17 @@ fun ColorCircle(
             brush = Brush.radialGradient(
                 colors = listOf(Color.White, Color.Transparent, Color.Black)
             ),
+        )
+        val markerCenter = size.center + markerPosition.times(size.maxDimension / 2f)
+        drawCircle(
+            color = Color.Black,
+            radius = 24f,
+            center = markerCenter,
+        )
+        drawCircle(
+            color = Color.White,
+            radius = 18f,
+            center = markerCenter,
         )
     }
 }
